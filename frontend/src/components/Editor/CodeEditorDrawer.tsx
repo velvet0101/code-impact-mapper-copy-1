@@ -96,7 +96,7 @@ export const CodeEditorDrawer: React.FC<CodeEditorDrawerProps> = ({
 
   return (
     <div
-      className={`fixed bottom-0 left-0 right-0 z-40 bg-[#0c101a]/95 backdrop-blur-2xl border-t border-slate-800 shadow-2xl transition-all duration-300 flex flex-col ${
+      className={`fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-2xl border-t border-slate-800 shadow-2xl transition-all duration-300 flex flex-col ${
         isExpanded ? 'h-[75vh]' : 'h-[360px]'
       }`}
     >

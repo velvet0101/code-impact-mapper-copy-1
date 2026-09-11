@@ -104,7 +104,7 @@ export const ImpactSidebar: React.FC<ImpactSidebarProps> = ({
   if (riskLevel === 'LOW') riskBadgeColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
 
   return (
-    <aside className="w-96 lg:w-[430px] h-full bg-slate-950/90 backdrop-blur-2xl border-l border-slate-800/80 flex flex-col z-20 shrink-0 shadow-2xl overflow-hidden select-none">
+    <aside className="w-96 lg:w-[430px] h-full bg-slate-950/95 backdrop-blur-2xl border-l border-slate-800/90 flex flex-col z-20 shrink-0 shadow-2xl overflow-hidden select-none">
       {/* Sidebar Header */}
       <div className="p-4 border-b border-slate-800/80 bg-slate-900/50 flex items-center justify-between">
         <div className="flex items-center gap-2 overflow-hidden">

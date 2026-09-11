@@ -46,7 +46,7 @@ export const RepoModal: React.FC<RepoModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 select-none">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-6 relative overflow-hidden">
+      <div className="bg-slate-950/80 border border-slate-700 rounded-2xl max-w-xl w-full p-6 shadow-xl space-y-6 relative overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

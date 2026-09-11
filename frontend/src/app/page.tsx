@@ -304,7 +304,7 @@ export default function HomePage() {
   const isCurrentFileDirty = Boolean(activeEditorFilePath && diffMetadata.dirtyFiles.includes(activeEditorFilePath));
 
   return (
-    <div className="flex flex-col w-screen h-screen bg-[#090d16] text-slate-100 overflow-hidden select-none">
+    <div className="flex flex-col w-screen h-screen bg-[#080b11] text-slate-100 overflow-hidden select-none">
       {/* Top Navbar Header */}
       <Navbar
         currentRepoName={codeData.repoName}
@@ -314,65 +314,62 @@ export default function HomePage() {
       />
 
       {/* Post-Analysis Repository Experience Bar */}
-      <div className="bg-slate-900/95 border-b border-slate-800/80 px-4 py-1.5 flex items-center justify-between text-xs text-slate-400 overflow-x-auto">
+      <div className="bg-[#0c111e]/90 border-b border-white/[0.06] px-5 py-2 flex items-center justify-between text-xs text-slate-400 overflow-x-auto select-none backdrop-blur-xl">
         <div className="flex items-center gap-3 shrink-0">
-          <div className="flex items-center gap-1.5 font-mono text-slate-200">
+          <div className="flex items-center gap-2 font-mono text-slate-200 bg-white/[0.03] px-2.5 py-1 rounded-xl border border-white/[0.06]">
             <Server className="w-3.5 h-3.5 text-cyan-400" />
             <span className="font-bold">{codeData.repoName}</span>
           </div>
 
           {backendStatus === 'online' ? (
-            <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-xl border border-emerald-500/20">
               <CheckCircle2 className="w-3 h-3 text-emerald-400" />
               FastAPI NetworkX Active
             </span>
           ) : (
-            <span className="text-[11px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">
+            <span className="text-[11px] text-slate-400 bg-white/[0.04] px-2.5 py-1 rounded-xl border border-white/[0.06]">
               Standalone Mode
             </span>
           )}
 
           {/* Live Edited Indicator & Revert All Button */}
           {isLiveEdited && (
-            <div className="flex items-center gap-1.5">
-              <span className="flex items-center gap-1 text-[11px] font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded animate-pulse">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 rounded-xl animate-pulse font-mono">
                 <Zap className="w-3 h-3 text-amber-400" />
                 Live Edited ({diffMetadata.dirtyFiles.length} file{diffMetadata.dirtyFiles.length > 1 ? 's' : ''})
               </span>
               <button
                 onClick={handleResetAllEdits}
-                className="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 transition-all flex items-center gap-1"
+                className="px-2.5 py-1 rounded-xl text-[11px] font-semibold bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 transition-all flex items-center gap-1.5 active:scale-95"
                 title="Revert all live edits back to original GitHub state"
               >
-                <RotateCcw className="w-2.5 h-2.5" />
+                <RotateCcw className="w-3 h-3" />
                 Revert All
               </button>
             </div>
           )}
         </div>
 
-        {/* Real Post-Analysis Metrics */}
-        <div className="flex items-center gap-4 text-[11px] font-mono shrink-0">
-          <span title="Total Files Scanned">
-            Files: <strong className="text-slate-200">{codeData.fileCount ?? 0}</strong>
+        {/* Real Post-Analysis Metrics Capsules */}
+        <div className="flex items-center gap-2 text-[11px] font-mono shrink-0">
+          <span className="px-2.5 py-1 rounded-lg bg-white/[0.02] border border-white/[0.05]" title="Total Files Scanned">
+            Files: <strong className="text-slate-200 font-bold">{codeData.fileCount ?? 0}</strong>
             {codeData.supportedFileCount !== undefined && (
-              <span className="text-slate-400 text-[10px]">
-                {' '}
-                ({codeData.supportedFileCount} supported / {codeData.unsupportedFileCount} unparsed)
-              </span>
+              <span className="text-slate-400 text-[10px]"> ({codeData.supportedFileCount} parsed)</span>
             )}
           </span>
-          <span>
-            Functions: <strong className="text-slate-200">{Object.keys(codeData.functions).length}</strong>
+          <span className="px-2.5 py-1 rounded-lg bg-white/[0.02] border border-white/[0.05]">
+            Functions: <strong className="text-slate-200 font-bold">{Object.keys(codeData.functions).length}</strong>
           </span>
-          <span>
-            Classes: <strong className="text-slate-200">{codeData.classCount ?? 0}</strong>
+          <span className="px-2.5 py-1 rounded-lg bg-white/[0.02] border border-white/[0.05]">
+            Classes: <strong className="text-slate-200 font-bold">{codeData.classCount ?? 0}</strong>
           </span>
-          <span>
-            Relationships: <strong className="text-cyan-400">{codeData.relationshipCount ?? 0}</strong>
+          <span className="px-2.5 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-300">
+            Edges: <strong className="text-cyan-400 font-bold">{codeData.relationshipCount ?? 0}</strong>
           </span>
           {codeData.analysisDurationMs !== undefined && (
-            <span className="flex items-center gap-1 text-slate-400">
+            <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/[0.02] border border-white/[0.05] text-slate-400">
               <Clock className="w-3 h-3 text-slate-400" />
               {codeData.analysisDurationMs}ms
             </span>
