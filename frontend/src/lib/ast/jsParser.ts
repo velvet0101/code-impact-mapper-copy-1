@@ -224,7 +224,11 @@ export function parseSourceFile(filePath: string, code: string): ParsedFile {
   };
 }
 
-export function buildCodeImpactData(repoName: string, parsedFiles: ParsedFile[]): CodeImpactData {
+export function buildCodeImpactData(
+  repoName: string,
+  parsedFiles: ParsedFile[],
+  fileContents?: Record<string, string>
+): CodeImpactData {
   const functionMap: Record<string, ParsedFunction> = {};
   const nameToIdMap: Record<string, string[]> = {};
 
@@ -268,5 +272,6 @@ export function buildCodeImpactData(repoName: string, parsedFiles: ParsedFile[])
     repoName,
     files: parsedFiles.map((f) => ({ filePath: f.filePath })),
     functions: functionMap,
+    fileContents: fileContents || {},
   };
 }

@@ -17,10 +17,10 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import dagre from 'dagre';
-import { CodeImpactData, BlastRadiusResult, GraphNodeData } from '@/types/impact';
+import { CodeImpactData, BlastRadiusResult, GraphNodeData, GraphDiffMetadata } from '@/types/impact';
 import { FunctionNode } from './CustomNodes/FunctionNode';
 import { getNodeImpactLevel } from '@/lib/ast/blastRadius';
-import { Search, SlidersHorizontal, Layers, RotateCcw, Eye, ShieldCheck, HelpCircle } from 'lucide-react';
+import { Search, SlidersHorizontal, Layers, RotateCcw, Eye, ShieldCheck, HelpCircle, Code2, Zap } from 'lucide-react';
 
 const nodeTypes = {
   functionNode: FunctionNode,
@@ -33,6 +33,9 @@ interface GraphViewProps {
   onSelectNode: (functionId: string) => void;
   onResetImpactView: () => void;
   onOpenGitHubModal?: () => void;
+  onOpenCodeEditor?: (functionId: string) => void;
+  diffMetadata?: GraphDiffMetadata;
+  dirtyFiles?: string[];
 }
 
 const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
@@ -77,6 +80,9 @@ const GraphCanvasContent: React.FC<GraphViewProps> = ({
   onSelectNode,
   onResetImpactView,
   onOpenGitHubModal,
+  onOpenCodeEditor,
+  diffMetadata,
+  dirtyFiles,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'blast'>('all');
@@ -96,12 +102,17 @@ const GraphCanvasContent: React.FC<GraphViewProps> = ({
       const fn = codeData.functions[fnId];
       const { impactLevel, depth } = getNodeImpactLevel(fnId, blastRadius);
 
+      const isEdited = dirtyFiles?.includes(fn.filePath);
+      const riskDelta = diffMetadata?.riskDeltaMap?.[fnId];
+
       const nodeData: GraphNodeData = {
         label: fn.name,
         functionData: fn,
         impactLevel,
         impactScore: blastRadius?.impactScore || 0,
         depth,
+        isEdited,
+        riskDelta,
       };
 
       rawNodes.push({
@@ -114,6 +125,7 @@ const GraphCanvasContent: React.FC<GraphViewProps> = ({
       fn.callees.forEach((calleeId) => {
         if (codeData.functions[calleeId]) {
           const edgeId = `e-${fnId}->${calleeId}`;
+          const isNewlyAdded = diffMetadata?.addedEdgeIds?.includes(edgeId);
           const isDirectCaller = blastRadius?.directCallerIds.includes(fnId) && calleeId === selectedFunctionId;
           const isFocalCallee = fnId === selectedFunctionId && blastRadius?.calleeIds.includes(calleeId);
           const isTransitive = blastRadius?.indirectCallerIds.includes(fnId);
@@ -122,7 +134,11 @@ const GraphCanvasContent: React.FC<GraphViewProps> = ({
           let strokeWidth = 1.5;
           let animated = false;
 
-          if (isDirectCaller) {
+          if (isNewlyAdded) {
+            strokeColor = '#10b981'; // distinct emerald for live added call edge
+            strokeWidth = 3;
+            animated = true;
+          } else if (isDirectCaller) {
             strokeColor = '#f59e0b';
             strokeWidth = 3.5;
             animated = true;
@@ -141,7 +157,15 @@ const GraphCanvasContent: React.FC<GraphViewProps> = ({
             source: fnId,
             target: calleeId,
             animated,
-            style: { stroke: strokeColor, strokeWidth },
+            style: {
+              stroke: strokeColor,
+              strokeWidth,
+              strokeDasharray: isNewlyAdded ? '6 4' : undefined,
+            },
+            label: isNewlyAdded ? 'NEW CALL' : undefined,
+            labelStyle: isNewlyAdded ? { fill: '#34d399', fontWeight: 800, fontSize: 10 } : undefined,
+            labelBgStyle: isNewlyAdded ? { fill: '#064e3b', fillOpacity: 0.9 } : undefined,
+            labelBgPadding: isNewlyAdded ? [4, 2] : undefined,
             markerEnd: {
               type: MarkerType.ArrowClosed,
               color: strokeColor,
@@ -154,7 +178,7 @@ const GraphCanvasContent: React.FC<GraphViewProps> = ({
     });
 
     return getLayoutedElements(rawNodes, rawEdges, layoutDir);
-  }, [codeData, blastRadius, selectedFunctionId, layoutDir]);
+  }, [codeData, blastRadius, selectedFunctionId, layoutDir, diffMetadata, dirtyFiles]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -219,6 +243,26 @@ const GraphCanvasContent: React.FC<GraphViewProps> = ({
 
         {/* Filter & Action Toggles */}
         <div className="flex items-center gap-2 bg-slate-900/90 backdrop-blur-xl border border-slate-800 p-1 rounded-xl shadow-2xl pointer-events-auto">
+          {/* Edit Code Button for Selected Node */}
+          {selectedFunctionId && onOpenCodeEditor && (
+            <button
+              onClick={() => onOpenCodeEditor(selectedFunctionId)}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/30 transition-all flex items-center gap-1.5 shadow-sm shadow-cyan-500/10"
+              title="Open Live Code Editor for this file"
+            >
+              <Code2 className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Edit Code</span>
+            </button>
+          )}
+
+          {/* Live Edited Indicator Badge */}
+          {dirtyFiles && dirtyFiles.length > 0 && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono">
+              <Zap className="w-3 h-3 text-emerald-400" />
+              <span>{dirtyFiles.length} file(s) live edited</span>
+            </div>
+          )}
+
           {/* Reset Impact View Button */}
           {selectedFunctionId && (
             <button

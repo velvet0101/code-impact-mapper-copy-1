@@ -283,6 +283,7 @@ export async function fetchAndAnalyzeGitHubRepo(
   // Limit to 30 files for fast and reliable analysis
   const filesToFetch = validFiles.slice(0, 30);
   const parsedFiles: ParsedFile[] = [];
+  const fileContentsMap: Record<string, string> = {};
 
   // Plain headers for raw content (DO NOT pass Authorization to raw.githubusercontent.com for public files)
   const rawHeaders: Record<string, string> = {
@@ -326,6 +327,7 @@ export async function fetchAndAnalyzeGitHubRepo(
     }
 
     if (fileContent) {
+      fileContentsMap[file.path] = fileContent;
       try {
         const parsedFile = parseSourceFile(file.path, fileContent);
         if (parsedFile.functions.length > 0) {
@@ -346,6 +348,6 @@ export async function fetchAndAnalyzeGitHubRepo(
   }
 
   console.log(`[GitHub Analyze] Successfully parsed ${parsedFiles.length} files for "${owner}/${repo}"`);
-  return buildCodeImpactData(`${owner}/${repo}`, parsedFiles);
+  return buildCodeImpactData(`${owner}/${repo}`, parsedFiles, fileContentsMap);
 }
 

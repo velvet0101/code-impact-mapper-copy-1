@@ -30,6 +30,8 @@ export interface GraphNodeData {
   impactLevel: ImpactLevel;
   impactScore: number;
   depth: number;
+  isEdited?: boolean;
+  riskDelta?: number;
   [key: string]: unknown;
 }
 
@@ -73,10 +75,20 @@ export interface AnalysisWarning {
   message: string;
 }
 
+export interface GraphDiffMetadata {
+  dirtyFiles: string[];
+  addedFunctionIds: string[];
+  removedFunctionIds: string[];
+  addedEdgeIds: string[];
+  removedEdgeIds: string[];
+  riskDeltaMap: Record<string, number>;
+}
+
 export interface CodeImpactData {
   repoName: string;
   files?: Array<{ filePath: string }>;
   functions: Record<string, ParsedFunction>;
+  fileContents?: Record<string, string>;
   fileCount?: number;
   supportedFileCount?: number;
   unsupportedFileCount?: number;
