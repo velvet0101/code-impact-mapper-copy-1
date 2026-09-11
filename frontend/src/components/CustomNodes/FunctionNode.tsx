@@ -32,10 +32,14 @@ export const FunctionNode = memo(({ data, selected }: NodeProps) => {
   }
 
   const shortFile = filePath.split('/').slice(-2).join('/');
+  const isEdited = nodeData.isEdited;
+  const riskDelta = nodeData.riskDelta;
 
   return (
     <div
       className={`relative group rounded-xl p-3.5 min-w-[240px] max-w-[320px] backdrop-blur-md transition-all duration-300 cursor-pointer border ${borderStyle} ${glowClass} ${
+        isEdited ? 'ring-1 ring-emerald-400/80 shadow-lg shadow-emerald-500/10' : ''
+      } ${
         selected ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-950' : ''
       }`}
     >
@@ -61,12 +65,35 @@ export const FunctionNode = memo(({ data, selected }: NodeProps) => {
           </span>
         </div>
 
-        {/* Export / Kind Badge */}
-        {isExported && (
-          <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shrink-0">
-            EXPORT
-          </span>
-        )}
+        <div className="flex items-center gap-1 shrink-0">
+          {/* Live Edited Indicator */}
+          {isEdited && (
+            <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse">
+              EDITED
+            </span>
+          )}
+
+          {/* Risk Score Delta Pill */}
+          {riskDelta !== undefined && riskDelta !== 0 && (
+            <span
+              className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border ${
+                riskDelta > 0
+                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+              }`}
+              title={`Risk Score changed by ${riskDelta > 0 ? '+' : ''}${riskDelta} points due to live edits`}
+            >
+              {riskDelta > 0 ? `+${riskDelta}` : riskDelta} Δ
+            </span>
+          )}
+
+          {/* Export / Kind Badge */}
+          {isExported && (
+            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+              EXPORT
+            </span>
+          )}
+        </div>
       </div>
 
       {/* File Path */}

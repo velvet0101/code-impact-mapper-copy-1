@@ -1,20 +1,46 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { GraphView } from '@/components/GraphView';
 import { ImpactSidebar } from '@/components/ImpactSidebar';
 import { RepoModal } from '@/components/RepoModal';
+import { CodeEditorDrawer } from '@/components/Editor/CodeEditorDrawer';
 import { calculateBlastRadius } from '@/lib/ast/blastRadius';
-import { CodeImpactData, BlastRadiusResult } from '@/types/impact';
-import { Server, CheckCircle2, AlertTriangle, Clock } from 'lucide-react';
+import { patchIncrementalFile } from '@/lib/ast/incrementalPatcher';
+import { CodeImpactData, BlastRadiusResult, GraphDiffMetadata } from '@/types/impact';
+import { Server, CheckCircle2, AlertTriangle, Clock, Zap, RotateCcw } from 'lucide-react';
+
+const initialDiffMetadata: GraphDiffMetadata = {
+  dirtyFiles: [],
+  addedFunctionIds: [],
+  removedFunctionIds: [],
+  addedEdgeIds: [],
+  removedEdgeIds: [],
+  riskDeltaMap: {},
+};
 
 export default function HomePage() {
+  // Pristine baseline fetched from GitHub / backend
+  const [originalCodeData, setOriginalCodeData] = useState<CodeImpactData>({
+    repoName: 'No Repository Loaded',
+    functions: {},
+  });
+
+  // Current live code & graph data (patched incrementally)
   const [codeData, setCodeData] = useState<CodeImpactData>({
     repoName: 'No Repository Loaded',
     functions: {},
   });
+
+  // In-memory overlay for edited files: filePath -> newCode
+  const [fileContentsOverlay, setFileContentsOverlay] = useState<Record<string, string>>({});
+  const [diffMetadata, setDiffMetadata] = useState<GraphDiffMetadata>(initialDiffMetadata);
+  const [parsingError, setParsingError] = useState<string | null>(null);
+
   const [selectedFnId, setSelectedFnId] = useState<string | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [activeEditorFilePath, setActiveEditorFilePath] = useState<string | null>(null);
 
   const [analysisId, setAnalysisId] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string>('');
@@ -55,7 +81,7 @@ export default function HomePage() {
     localStorage.setItem('GEMINI_API_KEY', key);
   };
 
-  // Calculate Blast Radius
+  // Calculate Blast Radius dynamically from current live functions
   const blastRadius: BlastRadiusResult | null = useMemo(() => {
     if (!selectedFnId || !codeData.functions[selectedFnId]) {
       return null;
@@ -84,6 +110,7 @@ export default function HomePage() {
             repoName: result.repo_name,
             files: [],
             functions: result.functions,
+            fileContents: result.file_contents || {},
             fileCount: result.file_count,
             supportedFileCount: result.supported_file_count,
             unsupportedFileCount: result.unsupported_file_count,
@@ -95,8 +122,16 @@ export default function HomePage() {
           };
 
           setCodeData(backendCodeData);
+          setOriginalCodeData(backendCodeData);
+          setFileContentsOverlay({});
+          setDiffMetadata(initialDiffMetadata);
+          setParsingError(null);
+
           const firstFnId = Object.keys(result.functions)[0] || null;
           setSelectedFnId(firstFnId);
+          if (firstFnId && result.functions[firstFnId]) {
+            setActiveEditorFilePath(result.functions[firstFnId].filePath);
+          }
           setIsSidebarOpen(true);
           setLoading(false);
           return;
@@ -105,14 +140,12 @@ export default function HomePage() {
         const errData = await res.json().catch(() => ({}));
         const detailMsg = errData.detail || `Backend returned HTTP ${res.status}`;
 
-        // If client error (invalid URL, not found, rate limit, forbidden), surface immediately
         if (res.status >= 400 && res.status < 500) {
           setErrorMsg(detailMsg);
           setLoading(false);
           throw new Error(detailMsg);
         }
 
-        // For server 5xx errors, fall through to fallback route
         console.warn('FastAPI backend returned 5xx, falling back to Next.js analyzer route:', detailMsg);
       } catch (err: unknown) {
         if (err instanceof Error && err.message && !err.message.includes('fetch')) {
@@ -139,9 +172,17 @@ export default function HomePage() {
 
       const data: CodeImpactData = await res.json();
       setCodeData(data);
+      setOriginalCodeData(data);
+      setFileContentsOverlay({});
+      setDiffMetadata(initialDiffMetadata);
+      setParsingError(null);
       setAnalysisId(null);
+
       const firstFnId = Object.keys(data.functions)[0] || null;
       setSelectedFnId(firstFnId);
+      if (firstFnId && data.functions[firstFnId]) {
+        setActiveEditorFilePath(data.functions[firstFnId].filePath);
+      }
       setIsSidebarOpen(true);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Analysis failed.';
@@ -152,15 +193,115 @@ export default function HomePage() {
     }
   };
 
-
   const handleNodeClick = (fnId: string) => {
     setSelectedFnId(fnId);
     setIsSidebarOpen(true);
+    const targetFile = codeData.functions[fnId]?.filePath;
+    if (targetFile) {
+      setActiveEditorFilePath(targetFile);
+    }
   };
+
+  const handleOpenCodeEditor = useCallback(
+    (fnId?: string) => {
+      const targetId = fnId || selectedFnId;
+      if (targetId && codeData.functions[targetId]) {
+        setSelectedFnId(targetId);
+        setActiveEditorFilePath(codeData.functions[targetId].filePath);
+      }
+      setIsEditorOpen(true);
+    },
+    [selectedFnId, codeData.functions]
+  );
 
   const handleResetImpactView = () => {
     setSelectedFnId(null);
   };
+
+  // Debounced in-memory code update handler
+  const handleFileContentChange = (filePath: string, newCode: string) => {
+    setFileContentsOverlay((prev) => ({ ...prev, [filePath]: newCode }));
+
+    const res = patchIncrementalFile(
+      filePath,
+      newCode,
+      codeData.functions,
+      originalCodeData.functions,
+      selectedFnId,
+      new Set(diffMetadata.dirtyFiles)
+    );
+
+    if (res.success) {
+      setCodeData((prev) => ({
+        ...prev,
+        functions: res.updatedFunctions,
+      }));
+      setDiffMetadata(res.diffMetadata);
+      setParsingError(null);
+    } else {
+      setParsingError(res.error || 'Syntax warning during edit');
+    }
+  };
+
+  // Reset a single file back to original fetched state
+  const handleResetFile = (filePath: string) => {
+    const updatedOverlay = { ...fileContentsOverlay };
+    delete updatedOverlay[filePath];
+    setFileContentsOverlay(updatedOverlay);
+
+    const remainingDirty = diffMetadata.dirtyFiles.filter((f) => f !== filePath);
+
+    if (remainingDirty.length === 0) {
+      setCodeData(originalCodeData);
+      setDiffMetadata(initialDiffMetadata);
+      setParsingError(null);
+    } else {
+      let currentFns = { ...originalCodeData.functions };
+      let lastMeta = initialDiffMetadata;
+      for (const df of remainingDirty) {
+        const patchRes = patchIncrementalFile(
+          df,
+          updatedOverlay[df] || originalCodeData.fileContents?.[df] || '',
+          currentFns,
+          originalCodeData.functions,
+          selectedFnId,
+          new Set(lastMeta.dirtyFiles)
+        );
+        if (patchRes.success) {
+          currentFns = patchRes.updatedFunctions;
+          lastMeta = patchRes.diffMetadata;
+        }
+      }
+      setCodeData((prev) => ({ ...prev, functions: currentFns }));
+      setDiffMetadata(lastMeta);
+      setParsingError(null);
+    }
+  };
+
+  // Reset all files back to pristine GitHub state
+  const handleResetAllEdits = () => {
+    setFileContentsOverlay({});
+    setCodeData(originalCodeData);
+    setDiffMetadata(initialDiffMetadata);
+    setParsingError(null);
+  };
+
+  // Compute the current code content to pass to editor for active file
+  const currentEditorCode = useMemo(() => {
+    if (!activeEditorFilePath) return '';
+    return (
+      fileContentsOverlay[activeEditorFilePath] ??
+      codeData.fileContents?.[activeEditorFilePath] ??
+      originalCodeData.fileContents?.[activeEditorFilePath] ??
+      (selectedFnId && codeData.functions[selectedFnId]?.filePath === activeEditorFilePath
+        ? codeData.functions[selectedFnId]?.codeSnippet
+        : '') ??
+      ''
+    );
+  }, [activeEditorFilePath, fileContentsOverlay, codeData, originalCodeData, selectedFnId]);
+
+  const isLiveEdited = diffMetadata.dirtyFiles.length > 0;
+  const isCurrentFileDirty = Boolean(activeEditorFilePath && diffMetadata.dirtyFiles.includes(activeEditorFilePath));
 
   return (
     <div className="flex flex-col w-screen h-screen bg-[#090d16] text-slate-100 overflow-hidden select-none">
@@ -190,6 +331,24 @@ export default function HomePage() {
               Standalone Mode
             </span>
           )}
+
+          {/* Live Edited Indicator & Revert All Button */}
+          {isLiveEdited && (
+            <div className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1 text-[11px] font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded animate-pulse">
+                <Zap className="w-3 h-3 text-amber-400" />
+                Live Edited ({diffMetadata.dirtyFiles.length} file{diffMetadata.dirtyFiles.length > 1 ? 's' : ''})
+              </span>
+              <button
+                onClick={handleResetAllEdits}
+                className="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 transition-all flex items-center gap-1"
+                title="Revert all live edits back to original GitHub state"
+              >
+                <RotateCcw className="w-2.5 h-2.5" />
+                Revert All
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Real Post-Analysis Metrics */}
@@ -197,12 +356,21 @@ export default function HomePage() {
           <span title="Total Files Scanned">
             Files: <strong className="text-slate-200">{codeData.fileCount ?? 0}</strong>
             {codeData.supportedFileCount !== undefined && (
-              <span className="text-slate-400 text-[10px]"> ({codeData.supportedFileCount} supported / {codeData.unsupportedFileCount} unparsed)</span>
+              <span className="text-slate-400 text-[10px]">
+                {' '}
+                ({codeData.supportedFileCount} supported / {codeData.unsupportedFileCount} unparsed)
+              </span>
             )}
           </span>
-          <span>Functions: <strong className="text-slate-200">{Object.keys(codeData.functions).length}</strong></span>
-          <span>Classes: <strong className="text-slate-200">{codeData.classCount ?? 0}</strong></span>
-          <span>Relationships: <strong className="text-cyan-400">{codeData.relationshipCount ?? 0}</strong></span>
+          <span>
+            Functions: <strong className="text-slate-200">{Object.keys(codeData.functions).length}</strong>
+          </span>
+          <span>
+            Classes: <strong className="text-slate-200">{codeData.classCount ?? 0}</strong>
+          </span>
+          <span>
+            Relationships: <strong className="text-cyan-400">{codeData.relationshipCount ?? 0}</strong>
+          </span>
           {codeData.analysisDurationMs !== undefined && (
             <span className="flex items-center gap-1 text-slate-400">
               <Clock className="w-3 h-3 text-slate-400" />
@@ -246,6 +414,9 @@ export default function HomePage() {
             onSelectNode={handleNodeClick}
             onResetImpactView={handleResetImpactView}
             onOpenGitHubModal={() => setIsRepoModalOpen(true)}
+            onOpenCodeEditor={handleOpenCodeEditor}
+            diffMetadata={diffMetadata}
+            dirtyFiles={diffMetadata.dirtyFiles}
           />
         </div>
 
@@ -257,9 +428,29 @@ export default function HomePage() {
             apiKey={apiKey}
             onSelectNode={handleNodeClick}
             onClose={() => setIsSidebarOpen(false)}
+            onOpenCodeEditor={() => selectedFnId && handleOpenCodeEditor(selectedFnId)}
+            isDirtyFile={selectedFnId ? diffMetadata.dirtyFiles.includes(codeData.functions[selectedFnId]?.filePath) : false}
+            onResetFile={() => {
+              const fp = selectedFnId && codeData.functions[selectedFnId]?.filePath;
+              if (fp) handleResetFile(fp);
+            }}
           />
         )}
       </main>
+
+      {/* Real-time In-App Code Editor Drawer */}
+      <CodeEditorDrawer
+        isOpen={isEditorOpen}
+        filePath={activeEditorFilePath}
+        functionName={selectedFnId ? codeData.functions[selectedFnId]?.name || null : null}
+        functionLineStart={selectedFnId ? codeData.functions[selectedFnId]?.lineStart : undefined}
+        initialCode={currentEditorCode}
+        isDirty={isCurrentFileDirty}
+        onCodeChange={handleFileContentChange}
+        onResetFile={handleResetFile}
+        onClose={() => setIsEditorOpen(false)}
+        parsingError={parsingError}
+      />
 
       {/* Repository Selection & GitHub Import Modal */}
       <RepoModal
@@ -270,3 +461,4 @@ export default function HomePage() {
     </div>
   );
 }
+

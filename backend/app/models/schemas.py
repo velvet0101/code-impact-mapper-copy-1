@@ -52,6 +52,7 @@ class AnalysisResult(BaseModel):
     relationship_count: int
     analysis_duration_ms: float
     warnings: List[AnalysisWarning] = Field(default_factory=list)
+    file_contents: Optional[Dict[str, str]] = None
 
 class ImpactAnalyzeRequest(BaseModel):
     analysis_id: Optional[str] = None

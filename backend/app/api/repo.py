@@ -78,6 +78,7 @@ def analyze_repository(req: RepoAnalyzeRequest):
             "relationship_count": len(edges_list),
             "analysis_duration_ms": analysis_duration_ms,
             "warnings": all_warnings,
+            "file_contents": source_files,
         }
 
         return AnalysisResult(
@@ -95,6 +96,7 @@ def analyze_repository(req: RepoAnalyzeRequest):
             relationship_count=len(edges_list),
             analysis_duration_ms=analysis_duration_ms,
             warnings=all_warnings,
+            file_contents=source_files,
         )
 
     except InvalidGitHubURLError as e:
@@ -138,4 +140,5 @@ def get_analysis_by_id(analysis_id: str):
         relationship_count=session["relationship_count"],
         analysis_duration_ms=session["analysis_duration_ms"],
         warnings=session["warnings"],
+        file_contents=session.get("file_contents"),
     )
