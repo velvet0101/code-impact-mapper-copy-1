@@ -1,0 +1,117 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: #090d16;
+    --foreground: #f1f5f9;
+    --card: rgba(15, 23, 42, 0.75);
+    --card-border: rgba(255, 255, 255, 0.1);
+  }
+
+  body {
+    background-color: #090d16;
+    color: #f1f5f9;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+/* Custom Glassmorphism Utility Classes */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-card {
+  background: rgba(30, 41, 59, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-input {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+}
+
+.glass-input:focus {
+  border-color: #38bdf8;
+  outline: none;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+}
+
+/* Glowing Impact Radius Styling */
+.glow-focal {
+  box-shadow: 0 0 25px rgba(244, 63, 94, 0.6), inset 0 0 15px rgba(244, 63, 94, 0.4);
+  border-color: #f43f5e !important;
+}
+
+.glow-direct {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.5), inset 0 0 10px rgba(245, 158, 11, 0.3);
+  border-color: #f59e0b !important;
+}
+
+.glow-indirect {
+  box-shadow: 0 0 18px rgba(168, 85, 247, 0.4), inset 0 0 8px rgba(168, 85, 247, 0.2);
+  border-color: #a855f7 !important;
+}
+
+.glow-callee {
+  box-shadow: 0 0 18px rgba(14, 165, 233, 0.4), inset 0 0 8px rgba(14, 165, 233, 0.2);
+  border-color: #0ea5e9 !important;
+}
+
+/* React Flow Canvas Customizations */
+.react-flow__background {
+  background-color: #090d16 !important;
+}
+
+.react-flow__controls {
+  box-shadow: none !important;
+  background: rgba(15, 23, 42, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+}
+
+.react-flow__controls-button {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #94a3b8 !important;
+  fill: #94a3b8 !important;
+}
+
+.react-flow__controls-button:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #38bdf8 !important;
+  fill: #38bdf8 !important;
+}
+
+.react-flow__minimap {
+  background: rgba(15, 23, 42, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.4);
+}
