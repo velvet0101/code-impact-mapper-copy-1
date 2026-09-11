@@ -2,116 +2,138 @@
 
 @layer base {
   :root {
-    --background: #090d16;
-    --foreground: #f1f5f9;
-    --card: rgba(15, 23, 42, 0.75);
-    --card-border: rgba(255, 255, 255, 0.1);
+    --background: #080b11;
+    --foreground: #f8fafc;
+    --card: rgba(11, 15, 25, 0.85);
+    --card-border: rgba(255, 255, 255, 0.08);
   }
 
   body {
-    background-color: #090d16;
-    color: #f1f5f9;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-color: #080b11;
+    color: #f8fafc;
+    font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overflow-x: hidden;
+    letter-spacing: -0.01em;
+  }
+
+  code, pre, kbd, samp {
+    font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
 }
 
-/* Custom Glassmorphism Utility Classes */
+/* Modern Glassmorphism & Panel Surfaces */
 .glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  background: rgba(13, 18, 30, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.45);
 }
 
 .glass-card {
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(18, 24, 38, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3);
 }
 
 .glass-input {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(11, 15, 25, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: #f8fafc;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-input:focus {
   border-color: #38bdf8;
   outline: none;
-  box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18), 0 0 12px rgba(56, 189, 248, 0.25);
 }
 
-/* Glowing Impact Radius Styling */
+/* Refined, Elegant Ambient Glows */
 .glow-focal {
-  box-shadow: 0 0 25px rgba(244, 63, 94, 0.6), inset 0 0 15px rgba(244, 63, 94, 0.4);
+  box-shadow: 0 0 0 1.5px rgba(244, 63, 94, 0.7), 0 10px 30px -4px rgba(244, 63, 94, 0.35);
   border-color: #f43f5e !important;
 }
 
 .glow-direct {
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.5), inset 0 0 10px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 0 0 1.5px rgba(245, 158, 11, 0.6), 0 10px 28px -4px rgba(245, 158, 11, 0.28);
   border-color: #f59e0b !important;
 }
 
 .glow-indirect {
-  box-shadow: 0 0 18px rgba(168, 85, 247, 0.4), inset 0 0 8px rgba(168, 85, 247, 0.2);
+  box-shadow: 0 0 0 1.5px rgba(168, 85, 247, 0.6), 0 10px 28px -4px rgba(168, 85, 247, 0.28);
   border-color: #a855f7 !important;
 }
 
 .glow-callee {
-  box-shadow: 0 0 18px rgba(14, 165, 233, 0.4), inset 0 0 8px rgba(14, 165, 233, 0.2);
+  box-shadow: 0 0 0 1.5px rgba(14, 165, 233, 0.6), 0 10px 28px -4px rgba(14, 165, 233, 0.28);
   border-color: #0ea5e9 !important;
+}
+
+.glow-edited {
+  box-shadow: 0 0 0 1.5px rgba(16, 185, 129, 0.7), 0 10px 30px -4px rgba(16, 185, 129, 0.35);
+  border-color: #10b981 !important;
 }
 
 /* React Flow Canvas Customizations */
 .react-flow__background {
-  background-color: #090d16 !important;
+  background-color: #080b11 !important;
 }
 
 .react-flow__controls {
-  box-shadow: none !important;
-  background: rgba(15, 23, 42, 0.8) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 8px !important;
+  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.5) !important;
+  background: rgba(13, 18, 30, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 12px !important;
   overflow: hidden;
+  padding: 2px !important;
 }
 
 .react-flow__controls-button {
   background: transparent !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border: none !important;
+  border-radius: 6px !important;
   color: #94a3b8 !important;
   fill: #94a3b8 !important;
+  margin: 1px 0 !important;
+  transition: all 0.15s ease !important;
 }
 
 .react-flow__controls-button:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
   color: #38bdf8 !important;
   fill: #38bdf8 !important;
 }
 
 .react-flow__minimap {
-  background: rgba(15, 23, 42, 0.85) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 8px !important;
+  background: rgba(13, 18, 30, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.5) !important;
+  overflow: hidden !important;
 }
 
-/* Custom Scrollbar */
+/* Custom Sleek Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
-  border-radius: 4px;
+  background: rgba(148, 163, 184, 0.18);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.4);
+  background: rgba(148, 163, 184, 0.35);
 }
