@@ -20,7 +20,7 @@ import dagre from 'dagre';
 import { CodeImpactData, BlastRadiusResult, GraphNodeData, GraphDiffMetadata } from '@/types/impact';
 import { FunctionNode } from './CustomNodes/FunctionNode';
 import { getNodeImpactLevel } from '@/lib/ast/blastRadius';
-import { Search, SlidersHorizontal, Layers, RotateCcw, Eye, ShieldCheck, HelpCircle, Code2, Zap } from 'lucide-react';
+import { Search, SlidersHorizontal, Layers, RotateCcw, Code2, Zap, Sparkles } from 'lucide-react';
 
 const nodeTypes = {
   functionNode: FunctionNode,
@@ -42,10 +42,10 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
 
-  const nodeWidth = 270;
-  const nodeHeight = 140;
+  const nodeWidth = 280;
+  const nodeHeight = 150;
 
-  dagreGraph.setGraph({ rankdir: direction, ranksep: 90, nodesep: 60 });
+  dagreGraph.setGraph({ rankdir: direction, ranksep: 100, nodesep: 70 });
 
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
@@ -87,7 +87,6 @@ const GraphCanvasContent: React.FC<GraphViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'blast'>('all');
   const [layoutDir, setLayoutDir] = useState<'TB' | 'LR'>('TB');
-  const [confidenceFilter, setConfidenceFilter] = useState<'all' | 'confirmed'>('all');
 
   const { fitView } = useReactFlow();
 
@@ -130,25 +129,25 @@ const GraphCanvasContent: React.FC<GraphViewProps> = ({
           const isFocalCallee = fnId === selectedFunctionId && blastRadius?.calleeIds.includes(calleeId);
           const isTransitive = blastRadius?.indirectCallerIds.includes(fnId);
 
-          let strokeColor = '#475569';
+          let strokeColor = 'rgba(148, 163, 184, 0.22)';
           let strokeWidth = 1.5;
           let animated = false;
 
           if (isNewlyAdded) {
             strokeColor = '#10b981'; // distinct emerald for live added call edge
-            strokeWidth = 3;
+            strokeWidth = 2.5;
             animated = true;
           } else if (isDirectCaller) {
             strokeColor = '#f59e0b';
-            strokeWidth = 3.5;
+            strokeWidth = 2.5;
             animated = true;
           } else if (isFocalCallee) {
             strokeColor = '#0ea5e9';
-            strokeWidth = 3;
+            strokeWidth = 2.2;
             animated = true;
           } else if (isTransitive) {
             strokeColor = '#a855f7';
-            strokeWidth = 2.5;
+            strokeWidth = 2;
             animated = true;
           }
 
@@ -163,14 +162,18 @@ const GraphCanvasContent: React.FC<GraphViewProps> = ({
               strokeDasharray: isNewlyAdded ? '6 4' : undefined,
             },
             label: isNewlyAdded ? 'NEW CALL' : undefined,
-            labelStyle: isNewlyAdded ? { fill: '#34d399', fontWeight: 800, fontSize: 10 } : undefined,
-            labelBgStyle: isNewlyAdded ? { fill: '#064e3b', fillOpacity: 0.9 } : undefined,
-            labelBgPadding: isNewlyAdded ? [4, 2] : undefined,
+            labelStyle: isNewlyAdded
+              ? { fill: '#34d399', fontWeight: 800, fontSize: 9, fontFamily: 'var(--font-geist-mono)' }
+              : undefined,
+            labelBgStyle: isNewlyAdded
+              ? { fill: '#042f2e', fillOpacity: 0.95, rx: 6, ry: 6 }
+              : undefined,
+            labelBgPadding: isNewlyAdded ? [6, 3] : undefined,
             markerEnd: {
               type: MarkerType.ArrowClosed,
               color: strokeColor,
-              width: 16,
-              height: 16,
+              width: 14,
+              height: 14,
             },
           });
         }
@@ -226,40 +229,48 @@ const GraphCanvasContent: React.FC<GraphViewProps> = ({
   };
 
   return (
-    <div className="relative w-full h-full bg-[#090d16] flex flex-col overflow-hidden">
+    <div className="relative w-full h-full bg-[#080b11] flex flex-col overflow-hidden">
       {/* Top Floating Controls Bar */}
       <div className="absolute top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
         {/* Search Bar */}
-        <div className="flex items-center gap-2 bg-slate-900/90 backdrop-blur-xl border border-slate-800 p-1.5 rounded-xl shadow-2xl pointer-events-auto min-w-[280px]">
-          <Search className="w-4 h-4 text-slate-400 ml-2" />
+        <div className="flex items-center gap-2.5 bg-[#0d1322]/85 backdrop-blur-2xl border border-white/[0.08] p-1.5 px-3 rounded-2xl shadow-2xl pointer-events-auto min-w-[280px] max-w-sm transition-all focus-within:border-cyan-500/50 focus-within:ring-2 focus-within:ring-cyan-500/15">
+          <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <input
             type="text"
-            placeholder="Search function, file, or class..."
+            placeholder="Search functions, classes, files..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-transparent text-xs text-white placeholder-slate-500 focus:outline-none w-full pr-2 font-mono"
+            className="bg-transparent text-xs text-white placeholder-slate-500 focus:outline-none w-full font-mono tracking-tight"
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="text-[10px] font-mono text-slate-500 hover:text-white px-1"
+            >
+              ESC
+            </button>
+          )}
         </div>
 
-        {/* Filter & Action Toggles */}
-        <div className="flex items-center gap-2 bg-slate-900/90 backdrop-blur-xl border border-slate-800 p-1 rounded-xl shadow-2xl pointer-events-auto">
-          {/* Edit Code Button for Selected Node */}
+        {/* Action Toggles & Context Bar */}
+        <div className="flex items-center gap-2 bg-[#0d1322]/85 backdrop-blur-2xl border border-white/[0.08] p-1.5 rounded-2xl shadow-2xl pointer-events-auto">
+          {/* Primary Action: Edit Code Button when function is selected */}
           {selectedFunctionId && onOpenCodeEditor && (
             <button
               onClick={() => onOpenCodeEditor(selectedFunctionId)}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/30 transition-all flex items-center gap-1.5 shadow-sm shadow-cyan-500/10"
-              title="Open Live Code Editor for this file"
+              className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-cyan-400 hover:bg-cyan-300 text-slate-950 transition-all flex items-center gap-1.5 shadow-lg shadow-cyan-400/20 active:scale-95"
+              title="Open In-App Code Editor for this file"
             >
-              <Code2 className="w-3.5 h-3.5 text-cyan-400" />
+              <Code2 className="w-3.5 h-3.5 text-slate-950 stroke-[2.5]" />
               <span>Edit Code</span>
             </button>
           )}
 
           {/* Live Edited Indicator Badge */}
           {dirtyFiles && dirtyFiles.length > 0 && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono">
-              <Zap className="w-3 h-3 text-emerald-400" />
-              <span>{dirtyFiles.length} file(s) live edited</span>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono">
+              <Zap className="w-3 h-3 text-emerald-400 animate-pulse" />
+              <span>{dirtyFiles.length} edited</span>
             </div>
           )}
 
@@ -267,36 +278,36 @@ const GraphCanvasContent: React.FC<GraphViewProps> = ({
           {selectedFunctionId && (
             <button
               onClick={handleReset}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30 transition-all flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 transition-all flex items-center gap-1.5"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset Impact View</span>
+              <span>Reset Selection</span>
             </button>
           )}
 
           {/* Filter Mode Toggle */}
           <button
             onClick={() => setFilterMode(filterMode === 'all' ? 'blast' : 'all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-all ${
               filterMode === 'blast'
                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                : 'text-slate-400 hover:text-white'
+                : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
             }`}
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span>{filterMode === 'blast' ? 'Impact Radius Only' : 'All Nodes'}</span>
+            <span>{filterMode === 'blast' ? 'Blast Radius Only' : 'All Nodes'}</span>
           </button>
 
-          <div className="h-4 w-px bg-slate-800" />
+          <div className="h-4 w-px bg-white/[0.08]" />
 
-          {/* Layout Orientation */}
+          {/* Layout Orientation Toggle */}
           <button
             onClick={toggleLayout}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white flex items-center gap-1.5 transition-all"
-            title="Toggle Layout Orientation"
+            className="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] flex items-center gap-1.5 transition-all"
+            title="Toggle Graph Layout Orientation"
           >
             <Layers className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Layout: {layoutDir === 'TB' ? 'Top-Down' : 'Left-Right'}</span>
+            <span>{layoutDir === 'TB' ? 'Top-Down' : 'Left-Right'}</span>
           </button>
         </div>
       </div>
@@ -316,7 +327,7 @@ const GraphCanvasContent: React.FC<GraphViewProps> = ({
           maxZoom={1.8}
           defaultEdgeOptions={{ type: 'smoothstep' }}
         >
-          <Background color="#1e293b" gap={24} size={1.5} />
+          <Background color="#161f33" gap={28} size={1} />
           <Controls className="!bottom-4 !left-4" />
           <MiniMap
             nodeColor={(node) => {
@@ -325,25 +336,26 @@ const GraphCanvasContent: React.FC<GraphViewProps> = ({
               if (data.impactLevel === 'direct') return '#f59e0b';
               if (data.impactLevel === 'indirect') return '#a855f7';
               if (data.impactLevel === 'callee') return '#0ea5e9';
-              return '#334155';
+              return '#1e293b';
             }}
-            maskColor="rgba(9, 13, 22, 0.7)"
+            maskColor="rgba(8, 11, 17, 0.75)"
             className="!bottom-4 !right-4"
           />
         </ReactFlow>
+
         {Object.keys(codeData.functions).length === 0 && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-sm p-6 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mb-4 shadow-xl">
-              <Layers className="w-7 h-7" />
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#080b11]/90 backdrop-blur-md p-6 text-center">
+            <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-cyan-500/20 via-purple-500/10 to-transparent border border-cyan-500/30 flex items-center justify-center text-cyan-400 mb-5 shadow-2xl shadow-cyan-500/10">
+              <Sparkles className="w-8 h-8" />
             </div>
-            <h3 className="text-base font-bold text-slate-100 mb-1">No Repository Loaded</h3>
-            <p className="text-xs text-slate-400 max-w-sm mb-6 leading-relaxed">
+            <h3 className="text-base font-bold text-slate-100 mb-1.5 tracking-tight">No Repository Loaded</h3>
+            <p className="text-xs text-slate-400 max-w-sm mb-6 leading-relaxed font-sans">
               Import a public GitHub repository to extract AST functions, map call graphs, and calculate blast radius.
             </p>
             {onOpenGitHubModal && (
               <button
                 onClick={onOpenGitHubModal}
-                className="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition-all flex items-center gap-2 shadow-lg shadow-cyan-500/20"
+                className="px-5 py-2.5 rounded-2xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs transition-all flex items-center gap-2 shadow-xl shadow-cyan-400/20 active:scale-95"
               >
                 <span>Import GitHub Repository</span>
               </button>
